@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Agente · Registro como Proveedor</title>
+<style>
+  :root {
+    --bg: #f6f5f2; --panel: #ffffff; --ink: #1d1d1b; --muted: #6b6a66; --line: #e4e2dc;
+    --accent: #1f5f8b; --accent-soft: #e6eff6; --ok: #2f7a4b; --err: #b3392f; --warn: #a86500; --warn-soft: #fff4dc;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--ink); }
+  header { display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--line); background: var(--panel); position: sticky; top: 0; z-index: 2; }
+  header h1 { font-size: 16px; margin: 0; font-weight: 650; }
+  header .meta { color: var(--muted); font-size: 12px; }
+  header .spacer { flex: 1; }
+  button { font: inherit; cursor: pointer; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); padding: 6px 12px; }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  button:disabled { opacity: .5; cursor: default; }
+  main { max-width: 860px; margin: 0 auto; padding: 20px 16px 160px; }
+  .casos { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .casos span { color: var(--muted); font-size: 13px; align-self: center; }
+  .casos button { font-size: 13px; }
+  .msg { margin: 14px 0; padding: 12px 16px; border-radius: 12px; background: var(--panel); border: 1px solid var(--line); }
+  .msg.usuario { background: var(--accent-soft); border-color: #cfe0ec; margin-left: 15%; }
+  .msg.error { border-color: var(--err); color: var(--err); }
+  .msg.confirmar { border: 2px solid var(--warn); background: var(--warn-soft); }
+  .msg .rol { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: 4px; }
+  .msg p { margin: 6px 0; } .msg ul { margin: 6px 0; padding-left: 20px; }
+  .msg code { background: #f0eee9; padding: 1px 5px; border-radius: 4px; font-size: 13px; }
+  .tool { margin: 6px 0 6px 16px; border-left: 3px solid var(--accent); background: var(--panel); border-radius: 0 8px 8px 0; font-size: 13px; }
+  .tool.fallo { border-left-color: var(--err); }
+  .tool summary { padding: 6px 10px; cursor: pointer; list-style: none; }
+  .tool summary::before { content: "🔧 "; }
+  .tool .nombre { font-family: ui-monospace, Menlo, monospace; font-weight: 600; }
+  .tool .estado { margin-left: 6px; font-weight: 600; }
+  .tool.ok .estado { color: var(--ok); } .tool.fallo .estado { color: var(--err); }
+  .tool .resumen { color: var(--muted); }
+  .tool pre { margin: 0; padding: 8px 10px; background: #faf9f6; overflow-x: auto; font-size: 12px; border-top: 1px solid var(--line); }
+  .banner { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--warn); font-weight: 600; color: var(--warn); }
+  .archivos { margin-top: 10px; font-size: 13px; }
+  .archivos a { color: var(--accent); margin-right: 12px; display: inline-block; }
+  .pensando { color: var(--muted); font-style: italic; margin: 12px 0 12px 16px; }
+  .pensando::after { content: ""; animation: puntos 1.2s steps(4) infinite; }
+  @keyframes puntos { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; } }
+  footer { position: fixed; bottom: 0; left: 0; right: 0; background: var(--panel); border-top: 1px solid var(--line); padding: 12px 16px; }
+  form { max-width: 860px; margin: 0 auto; display: flex; gap: 8px; }
+  textarea { flex: 1; font: inherit; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; resize: none; height: 48px; }
+  textarea:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+  .vacio { color: var(--muted); text-align: center; margin-top: 40px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Registro como Proveedor</h1>
+  <span class="meta" id="meta">conectando…</span>
+  <span class="spacer"></span>
+  <button id="nueva" type="button">Nueva sesión</button>
+</header>
+<main>
+  <div class="casos" id="casos"><span>Casos:</span></div>
+  <div id="chat"><p class="vacio">Pide algo como: <em>Procesa el caso "ec-corp-andina". No envíes nada todavía.</em></p></div>
+</main>
+<footer>
+  <form id="form">
+    <textarea id="entrada" placeholder="Escribe un mensaje… (Enter para enviar)"></textarea>
+    <button class="primary" id="enviar" type="submit">Enviar</button>
+  </form>
+</footer>
+<script>
+const $ = (id) => document.getElementById(id)
+const almacen = {
+  get(k) { try { return localStorage.getItem(k) } catch { return null } },
+  set(k, v) { try { localStorage.setItem(k, v) } catch {} },
+}
+let sessionId = almacen.get("sessionId") || nuevoId()
+let claveAcceso = almacen.get("accessKey") || ""
+let ocupado = false
+
+function nuevoId() {
+  const id = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2)).replace(/[^a-zA-Z0-9-]/g, "")
+  almacen.set("sessionId", id)
+  return id
+}
+
+function escapar(t) {
+  return String(t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]))
+}
+
+// Markdown mínimo: negritas, código, viñetas y párrafos.
+function md(t) {
+  const lineas = escapar(t).split("\n")
+  let html = "", enLista = false
+  for (const l of lineas) {
+    const item = l.match(/^\s*[-*•]\s+(.*)/)
+    const fmt = (s) => s.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/`([^`]+)`/g, "<code>$1</code>")
+    if (item) { if (!enLista) { html += "<ul>"; enLista = true } html += "<li>" + fmt(item[1]) + "</li>"; continue }
+    if (enLista) { html += "</ul>"; enLista = false }
+    if (l.trim()) html += "<p>" + fmt(l.replace(/^#+\s*/, "")) + "</p>"
+  }
+  return enLista ? html + "</ul>" : html
+}
+
+function headers() {
+  const h = { "content-type": "application/json" }
+  if (claveAcceso) h["x-access-key"] = claveAcceso
+  return h
+}
+
+function quitarVacio() { const v = document.querySelector(".vacio"); if (v) v.remove() }
+
+function agregarMensaje(tipo, texto, opciones = {}) {
+  quitarVacio()
+  const div = document.createElement("div")
+  div.className = "msg " + tipo + (opciones.confirmar ? " confirmar" : "")
+  const rol = { usuario: "Tú", asistente: "Agente", error: "Error" }[tipo] || tipo
+  div.innerHTML = '<div class="rol">' + rol + "</div>" + md(texto)
+  if (opciones.confirmar) {
+    const b = document.createElement("div")
+    b.className = "banner"
+    b.innerHTML = "⚠️ El agente espera tu confirmación antes de cualquier acción externa."
+    const si = document.createElement("button"); si.textContent = "Sí, confirmo"; si.className = "primary"
+    const no = document.createElement("button"); no.textContent = "Todavía no"
+    si.onclick = () => enviar("Sí, confirmo")
+    no.onclick = () => enviar("No, todavía no")
+    if (opciones.historico) { si.disabled = true; no.disabled = true }
+    b.append(si, no)
+    div.appendChild(b)
+  }
+  $("chat").appendChild(div)
+  window.scrollTo(0, document.body.scrollHeight)
+  return div
+}
+
+function agregarHerramienta(ev) {
+  quitarVacio()
+  const d = document.createElement("details")
+  d.className = "tool " + (ev.ok ? "ok" : "fallo")
+  d.innerHTML = '<summary><span class="nombre">' + escapar(ev.nombre) + '</span><span class="estado">' + (ev.ok ? "✓" : "✗") +
+    '</span> <span class="resumen">' + escapar(ev.resumen || "") + "</span></summary><pre>argumentos: " + escapar(JSON.stringify(ev.args, null, 2)) + "</pre>"
+  $("chat").appendChild(d)
+}
+
+async function mostrarArchivos(caso, contenedor) {
+  try {
+    const r = await fetch("/api/archivos/" + encodeURIComponent(caso), { headers: headers() })
+    const { archivos } = await r.json()
+    const utiles = (archivos || []).filter((a) => !a.endsWith("log.jsonl") && !a.endsWith(".json"))
+    if (!utiles.length) return
+    const div = document.createElement("div")
+    div.className = "archivos"
+    div.innerHTML = "<strong>Archivos generados:</strong><br>" + utiles.map((a) =>
+      '<a target="_blank" href="/api/archivo?ruta=' + encodeURIComponent(a) + (claveAcceso ? "&key=" + encodeURIComponent(claveAcceso) : "") + '">' + escapar(a.replace(/^out\//, "")) + "</a>").join("")
+    contenedor.appendChild(div)
+  } catch {}
+}
+
+function casoDe(toolCalls) {
+  for (const t of toolCalls || []) if (t.args && typeof t.args.caso === "string") return t.args.caso
+  return null
+}
+
+async function enviar(texto) {
+  texto = texto.trim()
+  if (!texto || ocupado) return
+  ocupado = true; $("enviar").disabled = true
+  document.querySelectorAll(".banner button").forEach((b) => (b.disabled = true))
+  agregarMensaje("usuario", texto)
+  const pensando = document.createElement("div")
+  pensando.className = "pensando"; pensando.textContent = "Pensando y usando herramientas"
+  $("chat").appendChild(pensando)
+  window.scrollTo(0, document.body.scrollHeight)
+  try {
+    const r = await fetch("/api/chat", { method: "POST", headers: headers(), body: JSON.stringify({ sessionId, message: texto }) })
+    const data = await r.json()
+    pensando.remove()
+    if (!r.ok) { agregarMensaje("error", data.error || "Error del servidor."); return }
+    for (const t of data.toolCalls || []) agregarHerramienta(t)
+    const div = agregarMensaje("asistente", data.reply || "(sin respuesta)", { confirmar: data.needsConfirmation })
+    const caso = casoDe(data.toolCalls)
+    if (caso) mostrarArchivos(caso, div)
+  } catch {
+    pensando.remove()
+    agregarMensaje("error", "No se pudo contactar al servidor. Revisa tu conexión e intenta de nuevo.")
+  } finally {
+    ocupado = false; $("enviar").disabled = false; $("entrada").focus()
+  }
+}
+
+async function cargarHistorial() {
+  try {
+    const r = await fetch("/api/sessions/" + sessionId, { headers: headers() })
+    if (!r.ok) return
+    const { eventos } = await r.json()
+    for (const ev of eventos || []) {
+      if (ev.tipo === "herramienta") agregarHerramienta(ev)
+      else agregarMensaje(ev.tipo, ev.texto || "", { confirmar: ev.needsConfirmation, historico: true })
+    }
+  } catch {}
+}
+
+async function iniciar() {
+  try {
+    const h = await (await fetch("/api/health")).json()
+    $("meta").textContent = "proveedor: " + h.provider + " · modelo: " + h.model
+    if (h.accessKeyRequired && !claveAcceso) {
+      claveAcceso = (window.prompt("Clave de acceso (está en el README):") || "").trim()
+      almacen.set("accessKey", claveAcceso)
+    }
+  } catch { $("meta").textContent = "servidor no disponible" }
+  try {
+    const r = await fetch("/api/casos", { headers: headers() })
+    if (r.status === 401) { almacen.set("accessKey", ""); $("meta").textContent += " · clave de acceso inválida (recarga la página)"; return }
+    const { casos } = await r.json()
+    for (const c of casos) {
+      const b = document.createElement("button"); b.type = "button"; b.textContent = c
+      b.onclick = () => enviar('Procesa el caso "' + c + '". Dime qué campos quedaron llenos, cuáles faltan, si el paquete está listo para firma y qué soportes debo actualizar. No envíes nada todavía.')
+      $("casos").appendChild(b)
+    }
+  } catch {}
+  await cargarHistorial()
+}
+
+$("form").onsubmit = (e) => { e.preventDefault(); const t = $("entrada").value; $("entrada").value = ""; enviar(t) }
+$("entrada").onkeydown = (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("form").requestSubmit() } }
+$("nueva").onclick = () => { sessionId = nuevoId(); $("chat").innerHTML = '<p class="vacio">Sesión nueva. Elige un caso o escribe un mensaje.</p>' }
+iniciar()
+</script>
+</body>
+</html>

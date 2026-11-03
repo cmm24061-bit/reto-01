@@ -1,0 +1,36 @@
+{
+  "_comentario": "Reglas de negocio que leen las herramientas. Cambiar una regla aquí no requiere tocar el servidor ni el código de las herramientas.",
+  "identificador_tributario_por_pais": {
+    "CO": "NIT",
+    "EC": "RUC",
+    "PE": "RUC",
+    "PA": "RUC",
+    "HN": "RTN"
+  },
+  "pais_del_maestro": "CO",
+  "clave_identificador_tributario": "nit",
+  "etiquetas_ambiguas": [
+    "Identificación tributaria",
+    "Número de identificación fiscal"
+  ],
+  "umbral_confianza": 0.8,
+  "umbral_sugerencia": 0.5,
+  "nombres_paises": {
+    "CO": "Colombia",
+    "EC": "Ecuador",
+    "PE": "Perú",
+    "PA": "Panamá",
+    "HN": "Honduras"
+  },
+  "claves_bancarias_prefijo": "banco.",
+  "nombres_soportes": {
+    "camara_comercio": "Certificado de Cámara de Comercio (existencia y representación legal)",
+    "rut": "RUT (registro tributario)",
+    "certificacion_bancaria": "Certificación bancaria",
+    "estados_financieros": "Estados financieros",
+    "parafiscales": "Certificación de parafiscales y seguridad social",
+    "certificado_cumplimiento_tributario": "Certificado de cumplimiento tributario",
+    "certificado_iso_9001": "Certificado ISO 9001"
+  },
+  "palabras_vacias": ["de", "del", "la", "el", "los", "las", "y", "o", "en", "para", "por", "a"]
+}
