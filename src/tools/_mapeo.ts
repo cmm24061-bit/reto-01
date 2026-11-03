@@ -132,7 +132,7 @@ export function mapear(caso: string, pais: string, etiquetas: string[], f: Fuent
       if (pais !== r.pais_del_maestro) {
         m.requiere_confirmacion.push({
           etiqueta, clave: res.clave, valor_propuesto: texto, ruta, confianza: res.confianza,
-          nota: `Identificador extranjero: el cliente (${pais}) pide ${idPais}; se llena con el NIT colombiano.`,
+          nota: `Identificador extranjero: el cliente pide ${idPais}; se usó el NIT colombiano.`,
         })
         continue
       }

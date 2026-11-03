@@ -6,69 +6,127 @@
 <title>Agente · Registro como Proveedor</title>
 <style>
   :root {
-    --bg: #f6f5f2; --panel: #ffffff; --ink: #1d1d1b; --muted: #6b6a66; --line: #e4e2dc;
-    --accent: #1f5f8b; --accent-soft: #e6eff6; --ok: #2f7a4b; --err: #b3392f; --warn: #a86500; --warn-soft: #fff4dc;
+    --bg: #f6f5f2; --panel: #ffffff; --soft: #faf9f6; --ink: #1d1d1b; --muted: #6b6a66; --line: #e4e2dc;
+    --accent: #1f5f8b; --accent-soft: #e6eff6; --ok: #2f7a4b; --ok-soft: #e8f3ec; --err: #b3392f; --err-soft: #fbeceb;
+    --warn: #8a5300; --warn-soft: #fff4dc; --warn-line: #e3b04b;
   }
   * { box-sizing: border-box; }
-  body { margin: 0; font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--ink); }
-  header { display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--line); background: var(--panel); position: sticky; top: 0; z-index: 2; }
-  header h1 { font-size: 16px; margin: 0; font-weight: 650; }
-  header .meta { color: var(--muted); font-size: 12px; }
-  header .spacer { flex: 1; }
-  button { font: inherit; cursor: pointer; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); padding: 6px 12px; }
-  button:hover { border-color: var(--accent); }
+  html, body { height: 100%; }
+  body { margin: 0; font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--ink); display: flex; flex-direction: column; }
+  header { display: flex; align-items: center; gap: 12px; padding: 10px 18px; border-bottom: 1px solid var(--line); background: var(--panel); }
+  header h1 { font-size: 15px; margin: 0; font-weight: 650; }
+  .meta { color: var(--muted); font-size: 12px; }
+  .spacer { flex: 1; }
+  button, .btn { font: inherit; font-size: 13px; cursor: pointer; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); padding: 5px 11px; color: var(--ink); text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+  button:hover, .btn:hover { border-color: var(--accent); }
   button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
   button:disabled { opacity: .5; cursor: default; }
-  main { max-width: 860px; margin: 0 auto; padding: 20px 16px 160px; }
-  .casos { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
-  .casos span { color: var(--muted); font-size: 13px; align-self: center; }
-  .casos button { font-size: 13px; }
-  .msg { margin: 14px 0; padding: 12px 16px; border-radius: 12px; background: var(--panel); border: 1px solid var(--line); }
-  .msg.usuario { background: var(--accent-soft); border-color: #cfe0ec; margin-left: 15%; }
-  .msg.error { border-color: var(--err); color: var(--err); }
-  .msg.confirmar { border: 2px solid var(--warn); background: var(--warn-soft); }
-  .msg .rol { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: 4px; }
-  .msg p { margin: 6px 0; } .msg ul { margin: 6px 0; padding-left: 20px; }
-  .msg code { background: #f0eee9; padding: 1px 5px; border-radius: 4px; font-size: 13px; }
-  .tool { margin: 6px 0 6px 16px; border-left: 3px solid var(--accent); background: var(--panel); border-radius: 0 8px 8px 0; font-size: 13px; }
+  .app { flex: 1; min-height: 0; display: grid; grid-template-columns: 270px minmax(0, 1fr) 390px; }
+  .col { min-height: 0; overflow-y: auto; }
+  .col-head { font-size: 12px; color: var(--muted); padding: 12px 14px 8px; text-transform: uppercase; letter-spacing: .04em; }
+
+  /* Solicitudes */
+  #solicitudes { background: var(--soft); border-right: 1px solid var(--line); }
+  .sol { padding: 10px 14px; border-bottom: 1px solid var(--line); cursor: pointer; }
+  .sol:hover { background: var(--panel); }
+  .sol.activa { background: var(--panel); box-shadow: inset 3px 0 0 var(--accent); }
+  .sol .l1 { display: flex; justify-content: space-between; gap: 8px; }
+  .sol .l1 .meta { white-space: nowrap; }
+  .sol .cli { font-weight: 600; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sol .asu { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .chip { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); margin: 4px 4px 0 0; white-space: nowrap; }
+  .chip.nuevo { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
+  .chip.ok { background: var(--ok-soft); color: var(--ok); border-color: transparent; }
+  .chip.warn { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+  .chip.err { background: var(--err-soft); color: var(--err); border-color: transparent; }
+  a.chip { text-decoration: none; color: var(--accent); }
+
+  /* Detalle */
+  #detalle { padding: 18px 22px 40px; }
+  .vacio { color: var(--muted); text-align: center; margin-top: 60px; }
+  .det-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .det-head h2 { font-size: 17px; margin: 0 0 2px; }
+  .cuerpo { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; margin: 12px 0 4px; font-size: 13px; color: #3d3c39; white-space: pre-wrap; }
+  .adj { font-size: 12px; color: var(--accent); margin-bottom: 8px; }
+  h3 { font-size: 13px; margin: 18px 0 6px; font-weight: 650; }
+  h3.ok { color: var(--ok); } h3.warn { color: var(--warn); } h3.err { color: var(--err); }
+  .tabla { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .fila { display: grid; grid-template-columns: minmax(150px, 1.1fr) minmax(130px, 1fr) minmax(0, 1.6fr); gap: 12px; padding: 6px 12px; border-bottom: 1px solid var(--line); font-size: 13px; }
+  .fila:last-child { border-bottom: none; }
+  .fila.ancha { grid-template-columns: minmax(150px, 1fr) minmax(90px, .7fr) minmax(0, 2.6fr); }
+  .fila > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fila .et { color: var(--muted); }
+  .fila .obs { color: var(--muted); font-size: 12px; }
+  .estado-paquete { margin-top: 14px; padding: 10px 14px; border-radius: 10px; font-size: 13px; }
+  .estado-paquete.no { background: var(--warn-soft); border: 1px solid var(--warn-line); color: var(--warn); }
+  .estado-paquete.si { background: var(--ok-soft); border: 1px solid #9fcfb1; color: var(--ok); }
+  .estado-paquete ul { margin: 4px 0 0; padding-left: 18px; }
+  .descargas { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 18px; }
+  .descargas h3 { margin: 0; }
+  .preview { margin-top: 8px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .preview iframe { width: 100%; height: 560px; border: 0; display: block; }
+  .preview table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .preview th, .preview td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  .preview th { background: var(--soft); font-weight: 600; font-size: 12px; color: var(--muted); }
+  .preview .hoja { background: #eef3ee; font-weight: 600; font-size: 12px; }
+  details.correo { margin-top: 18px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
+  details.correo summary { padding: 10px 14px; cursor: pointer; font-weight: 650; font-size: 13px; }
+  details.correo .txt { padding: 0 14px 14px; font-size: 13px; }
+
+  /* Chat */
+  #chatcol { background: var(--panel); border-left: 1px solid var(--line); display: flex; flex-direction: column; overflow: hidden; }
+  #chat { flex: 1; overflow-y: auto; padding: 4px 12px 12px; }
+  .msg { margin: 10px 0; padding: 9px 12px; border-radius: 10px; background: var(--soft); border: 1px solid var(--line); font-size: 13px; }
+  .msg.usuario { background: var(--accent-soft); border-color: #cfe0ec; margin-left: 12%; }
+  .msg.error { border-color: var(--err); color: var(--err); background: var(--err-soft); }
+  .msg.confirmar { border: 2px solid var(--warn-line); background: var(--warn-soft); }
+  .msg .rol { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: 2px; }
+  .msg p { margin: 4px 0; } .msg ul { margin: 4px 0; padding-left: 18px; }
+  .msg code { background: #efede8; padding: 1px 4px; border-radius: 4px; font-size: 12px; }
+  .tool { margin: 6px 0 6px 10px; border-left: 3px solid var(--accent); background: var(--soft); font-size: 12px; }
   .tool.fallo { border-left-color: var(--err); }
-  .tool summary { padding: 6px 10px; cursor: pointer; list-style: none; }
-  .tool summary::before { content: "🔧 "; }
+  .tool summary { padding: 5px 8px; cursor: pointer; }
   .tool .nombre { font-family: ui-monospace, Menlo, monospace; font-weight: 600; }
-  .tool .estado { margin-left: 6px; font-weight: 600; }
+  .tool .estado { margin-left: 4px; font-weight: 700; }
   .tool.ok .estado { color: var(--ok); } .tool.fallo .estado { color: var(--err); }
-  .tool .resumen { color: var(--muted); }
-  .tool pre { margin: 0; padding: 8px 10px; background: #faf9f6; overflow-x: auto; font-size: 12px; border-top: 1px solid var(--line); }
-  .banner { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--warn); font-weight: 600; color: var(--warn); }
-  .archivos { margin-top: 10px; font-size: 13px; }
-  .archivos a { color: var(--accent); margin-right: 12px; display: inline-block; }
-  .pensando { color: var(--muted); font-style: italic; margin: 12px 0 12px 16px; }
+  .tool .resumen { display: block; color: var(--muted); }
+  .tool pre { margin: 0; padding: 6px 8px; overflow-x: auto; font-size: 11px; border-top: 1px solid var(--line); background: var(--panel); }
+  .banner { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--warn-line); color: var(--warn); font-weight: 600; font-size: 12px; }
+  .banner div { display: flex; gap: 6px; margin-top: 6px; }
+  .pensando { color: var(--muted); font-style: italic; margin: 10px 0 10px 10px; font-size: 13px; }
   .pensando::after { content: ""; animation: puntos 1.2s steps(4) infinite; }
   @keyframes puntos { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; } }
-  footer { position: fixed; bottom: 0; left: 0; right: 0; background: var(--panel); border-top: 1px solid var(--line); padding: 12px 16px; }
-  form { max-width: 860px; margin: 0 auto; display: flex; gap: 8px; }
-  textarea { flex: 1; font: inherit; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; resize: none; height: 48px; }
+  form { display: flex; gap: 6px; padding: 10px 12px; border-top: 1px solid var(--line); }
+  textarea { flex: 1; font: inherit; font-size: 13px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; resize: none; height: 44px; }
   textarea:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
-  .vacio { color: var(--muted); text-align: center; margin-top: 40px; }
+
+  @media (max-width: 1100px) {
+    body { height: auto; }
+    .app { grid-template-columns: 1fr; }
+    .col { overflow: visible; }
+    #chatcol { border-left: none; border-top: 1px solid var(--line); height: 80vh; }
+  }
 </style>
 </head>
 <body>
 <header>
-  <h1>Registro como Proveedor</h1>
+  <h1>Registro como proveedor</h1>
   <span class="meta" id="meta">conectando…</span>
   <span class="spacer"></span>
-  <button id="nueva" type="button">Nueva sesión</button>
+  <button id="nueva" type="button">Nueva sesión de chat</button>
 </header>
-<main>
-  <div class="casos" id="casos"><span>Casos:</span></div>
-  <div id="chat"><p class="vacio">Pide algo como: <em>Procesa el caso "ec-corp-andina". No envíes nada todavía.</em></p></div>
-</main>
-<footer>
-  <form id="form">
-    <textarea id="entrada" placeholder="Escribe un mensaje… (Enter para enviar)"></textarea>
-    <button class="primary" id="enviar" type="submit">Enviar</button>
-  </form>
-</footer>
+<div class="app">
+  <aside class="col" id="solicitudes"><div class="col-head">Formulario de solicitudes</div><div id="lista"></div></aside>
+  <main class="col" id="detalle"><p class="vacio">Selecciona una solicitud de la lista.</p></main>
+  <section id="chatcol">
+    <div class="col-head">Chat con el agente</div>
+    <div id="chat"><p class="meta" id="chatvacio" style="padding:0 2px">Elige una solicitud y pulsa «Procesar con el agente», o escribe aquí.</p></div>
+    <form id="form">
+      <textarea id="entrada" placeholder="Escribe un mensaje… (Enter para enviar)"></textarea>
+      <button class="primary" id="enviar" type="submit">Enviar</button>
+    </form>
+  </section>
+</div>
 <script>
 const $ = (id) => document.getElementById(id)
 const almacen = {
@@ -78,122 +136,217 @@ const almacen = {
 let sessionId = almacen.get("sessionId") || nuevoId()
 let claveAcceso = almacen.get("accessKey") || ""
 let ocupado = false
+let casoActual = null
+const FORMATO = { xlsx: "Excel", pdf: "PDF", portal: "Portal web" }
 
 function nuevoId() {
   const id = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2)).replace(/[^a-zA-Z0-9-]/g, "")
   almacen.set("sessionId", id)
   return id
 }
-
-function escapar(t) {
-  return String(t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]))
+function esc(t) {
+  return String(t ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]))
 }
-
-// Markdown mínimo: negritas, código, viñetas y párrafos.
 function md(t) {
-  const lineas = escapar(t).split("\n")
-  let html = "", enLista = false
-  for (const l of lineas) {
+  let html = "", lista = false
+  const fmt = (s) => s.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/`([^`]+)`/g, "<code>$1</code>").replace(/_(.+?)_/g, "<em>$1</em>")
+  for (const l of esc(t).split("\n")) {
     const item = l.match(/^\s*[-*•]\s+(.*)/)
-    const fmt = (s) => s.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>").replace(/`([^`]+)`/g, "<code>$1</code>")
-    if (item) { if (!enLista) { html += "<ul>"; enLista = true } html += "<li>" + fmt(item[1]) + "</li>"; continue }
-    if (enLista) { html += "</ul>"; enLista = false }
-    if (l.trim()) html += "<p>" + fmt(l.replace(/^#+\s*/, "")) + "</p>"
+    if (item) { if (!lista) { html += "<ul>"; lista = true } html += "<li>" + fmt(item[1]) + "</li>"; continue }
+    if (lista) { html += "</ul>"; lista = false }
+    if (l.trim() === "---") html += "<hr>"
+    else if (l.trim()) html += "<p>" + fmt(l.replace(/^#+\s*/, "")) + "</p>"
   }
-  return enLista ? html + "</ul>" : html
+  return lista ? html + "</ul>" : html
 }
-
 function headers() {
   const h = { "content-type": "application/json" }
   if (claveAcceso) h["x-access-key"] = claveAcceso
   return h
 }
+const conClave = (url) => claveAcceso ? url + (url.includes("?") ? "&" : "?") + "key=" + encodeURIComponent(claveAcceso) : url
+const urlArchivo = (ruta) => conClave("/api/archivo?ruta=" + encodeURIComponent(ruta))
+async function api(ruta) {
+  const r = await fetch(ruta, { headers: headers() })
+  return r.json()
+}
+function fecha(f) {
+  const m = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"]
+  const [a, mes, d] = String(f).split("-")
+  return d && mes ? `${d} ${m[Number(mes) - 1]} ${a}` : f
+}
 
-function quitarVacio() { const v = document.querySelector(".vacio"); if (v) v.remove() }
+// ─── Lista de solicitudes ───
+function chipEstado(s) {
+  if (s.estado === "enviado") return '<span class="chip ok">Envío simulado</span>'
+  if (s.estado === "procesado") return s.listo_para_firma ? '<span class="chip ok">Listo para firma</span>' : '<span class="chip warn">No listo para firma</span>'
+  return '<span class="chip nuevo">Nuevo</span>'
+}
+async function cargarSolicitudes() {
+  try {
+    const { solicitudes } = await api("/api/solicitudes")
+    $("lista").innerHTML = solicitudes.map((s) => `
+      <div class="sol ${s.caso === casoActual ? "activa" : ""}" data-caso="${esc(s.caso)}">
+        <div class="l1"><span class="cli">${esc(s.cliente)}</span><span class="meta">${esc(fecha(s.fecha).slice(0, 6))}</span></div>
+        <div class="asu">${esc(s.asunto)}</div>
+        <span class="chip">${esc(s.pais)} · ${esc(FORMATO[s.formato] || s.formato)}</span>${chipEstado(s)}
+      </div>`).join("")
+    document.querySelectorAll(".sol").forEach((el) => (el.onclick = () => seleccionar(el.dataset.caso)))
+  } catch { $("lista").innerHTML = '<p class="meta" style="padding:0 14px">No se pudo cargar la lista.</p>' }
+}
 
-function agregarMensaje(tipo, texto, opciones = {}) {
+// ─── Detalle ───
+function filasHtml(campos, estado) {
+  return campos.filter((c) => c.estado === estado).map((c) => `
+    <div class="fila${estado === "lleno" ? "" : " ancha"}"><span class="et" title="${esc(c.etiqueta)}">${esc(c.etiqueta)}</span>
+    <span title="${esc(c.valor)}">${c.valor ? esc(c.valor) : '<span class="meta">—</span>'}</span>
+    <span class="obs" title="${esc(c.observacion)}">${esc(c.observacion)}</span></div>`).join("")
+}
+function seccionCampos(campos, estado, titulo, clase) {
+  const n = campos.filter((c) => c.estado === estado).length
+  return `<h3 class="${clase}">${titulo} · ${n}</h3>` + (n ? `<div class="tabla">${filasHtml(campos, estado)}</div>` : '<p class="meta" style="margin:0">Ninguno.</p>')
+}
+function vistaPrevia(d) {
+  if (!d.formulario) return ""
+  const fmt = d.correo.formato
+  if (fmt === "pdf") return `<div class="preview"><iframe src="${urlArchivo(d.formulario)}" title="Vista previa del formulario PDF"></iframe></div>`
+  if (fmt === "xlsx") {
+    let html = '<div class="preview"><table><tr><th>Celda</th><th>Campo</th><th>Valor</th></tr>', hoja = null
+    for (const c of d.campos || []) {
+      if (c.hoja !== hoja) { hoja = c.hoja; html += `<tr><td class="hoja" colspan="3">Hoja: ${esc(hoja)}</td></tr>` }
+      html += `<tr><td class="meta">${esc(c.celda)}</td><td>${esc(c.etiqueta)}</td><td>${c.valor ? esc(c.valor) : '<span class="meta">(vacío)</span>'}</td></tr>`
+    }
+    return html + "</table></div>"
+  }
+  let html = '<div class="preview"><table><tr><th>Campo del portal</th><th>Valor para copiar</th><th>Estado</th></tr>'
+  const nombre = { lleno: "lleno", requiere_confirmacion: "por confirmar", faltante: "faltante" }
+  for (const c of d.campos || []) html += `<tr><td>${esc(c.etiqueta)}</td><td>${c.valor ? esc(c.valor) : '<span class="meta">—</span>'}</td><td class="meta">${nombre[c.estado]}</td></tr>`
+  return html + "</table></div>"
+}
+function chipSoporte(s) {
+  const clase = { presente: "ok", vencido: "warn", ausente: "err" }[s.estado] || ""
+  const extra = s.estado === "vencido" ? ` (venció ${esc(s.vigencia_hasta)})` : s.estado === "ausente" ? " (ausente)" : ""
+  return `<span class="chip ${clase}">${esc(s.nombre)}${extra}</span>`
+}
+function renderDetalle(d) {
+  const c = d.correo, x = d.extraido
+  let html = `
+    <div class="det-head"><div><h2>${esc(c.asunto)}</h2><div class="meta">De: ${esc(c.de)} · ${esc(fecha(c.fecha))}</div></div>
+    <button class="primary" id="procesar" type="button">${d.campos ? "Volver a procesar" : "Procesar con el agente"}</button></div>
+    <div class="cuerpo">${esc(c.cuerpo)}</div>
+    <div class="adj">${(c.adjuntos || []).map((a) => "📎 " + esc(a)).join(" · ") || '<span class="meta">Sin adjuntos</span>'}</div>
+    <h3>Información extraída</h3>
+    <div class="tabla">
+      <div class="fila"><span class="et">Cliente</span><span style="grid-column: span 2">${esc(c.cliente)}</span></div>
+      <div class="fila"><span class="et">País · identificador</span><span style="grid-column: span 2">${esc(x.pais_nombre)} · ${esc(x.identificador)}</span></div>
+      <div class="fila"><span class="et">Formato de salida</span><span style="grid-column: span 2">${esc(FORMATO[c.formato] || c.formato)}</span></div>
+      <div class="fila"><span class="et">Campos solicitados</span><span style="grid-column: span 2">${x.campos_solicitados}</span></div>
+      <div class="fila"><span class="et">Soportes exigidos</span><span style="grid-column: span 2" title="${esc(x.soportes_exigidos.join(", "))}">${x.soportes_exigidos.length}</span></div>
+    </div>`
+  if (x.error_plantilla) html += `<p class="msg error">${esc(x.error_plantilla)}</p>`
+
+  if (!d.campos) {
+    html += '<p class="meta" style="margin-top:18px">Esta solicitud aún no se ha procesado. Pulsa «Procesar con el agente» para llenar los campos y armar el paquete.</p>'
+  } else {
+    html += seccionCampos(d.campos, "lleno", "Llenos", "ok")
+    html += seccionCampos(d.campos, "requiere_confirmacion", "Por confirmar", "warn")
+    html += seccionCampos(d.campos, "faltante", "Faltantes", "err")
+  }
+  if (d.paquete) {
+    html += `<h3>Soportes</h3><div>${d.paquete.soportes.map(chipSoporte).join("")}</div>`
+    html += d.paquete.listo_para_firma
+      ? '<div class="estado-paquete si"><strong>Listo para firma.</strong></div>'
+      : `<div class="estado-paquete no"><strong>No está listo para firma:</strong><ul>${d.paquete.motivos_bloqueo.map((m) => "<li>" + esc(m) + "</li>").join("")}</ul></div>`
+  }
+  if (d.formulario) {
+    const etiqueta = c.formato === "portal" ? "Valores para el portal web" : "Borrador del formulario · " + (FORMATO[c.formato] || c.formato)
+    html += `<div class="descargas"><h3>${etiqueta}</h3><div style="display:flex;gap:6px">
+      <a class="btn" href="${urlArchivo(d.formulario)}" target="_blank">⬇ ${c.formato === "portal" ? "Valores" : "Formulario"}</a>
+      ${d.paquete ? `<a class="btn" href="${conClave("/api/paquete/" + encodeURIComponent(d.caso) + ".zip")}">⬇ Descargar paquete (.zip)</a>` : ""}</div></div>`
+    if (d.paquete) html += `<div style="margin-top:6px"><span class="meta">Contenido del paquete:</span> ${d.paquete.archivos.map((a) => `<a class="chip" target="_blank" href="${urlArchivo("out/" + d.caso + "/paquete/" + a)}">${esc(a)}</a>`).join("")}</div>`
+    if (d.archivos.some((a) => a.endsWith("ENVIO-SIMULADO.md"))) html += `<div style="margin-top:6px"><a class="chip ok" target="_blank" href="${urlArchivo("out/" + d.caso + "/ENVIO-SIMULADO.md")}">ENVIO-SIMULADO.md</a></div>`
+    html += vistaPrevia(d)
+  }
+  if (d.borrador_correo) html += `<details class="correo"><summary>Borrador del correo de respuesta</summary><div class="txt">${md(d.borrador_correo)}</div></details>`
+  $("detalle").innerHTML = html
+  $("procesar").onclick = () => enviar(`Procesa el caso "${d.caso}". Dime qué campos quedaron llenos, cuáles faltan, si el paquete está listo para firma y qué soportes debo actualizar. No envíes nada todavía.`)
+}
+async function seleccionar(caso, mantenerScroll) {
+  casoActual = caso
+  document.querySelectorAll(".sol").forEach((el) => el.classList.toggle("activa", el.dataset.caso === caso))
+  try {
+    const scroll = $("detalle").scrollTop
+    renderDetalle(await api("/api/casos/" + encodeURIComponent(caso)))
+    if (mantenerScroll) $("detalle").scrollTop = scroll
+  } catch { $("detalle").innerHTML = '<p class="vacio">No se pudo cargar la solicitud.</p>' }
+}
+
+// ─── Chat ───
+function quitarVacio() { const v = $("chatvacio"); if (v) v.remove() }
+function agregarMensaje(tipo, texto, op = {}) {
   quitarVacio()
   const div = document.createElement("div")
-  div.className = "msg " + tipo + (opciones.confirmar ? " confirmar" : "")
-  const rol = { usuario: "Tú", asistente: "Agente", error: "Error" }[tipo] || tipo
-  div.innerHTML = '<div class="rol">' + rol + "</div>" + md(texto)
-  if (opciones.confirmar) {
+  div.className = "msg " + tipo + (op.confirmar ? " confirmar" : "")
+  div.innerHTML = '<div class="rol">' + ({ usuario: "Tú", asistente: "Agente", error: "Error" }[tipo] || tipo) + "</div>" + md(texto)
+  if (op.confirmar) {
     const b = document.createElement("div")
     b.className = "banner"
-    b.innerHTML = "⚠️ El agente espera tu confirmación antes de cualquier acción externa."
+    b.innerHTML = "⚠️ El agente espera tu confirmación antes de cualquier acción externa.<div></div>"
     const si = document.createElement("button"); si.textContent = "Sí, confirmo"; si.className = "primary"
     const no = document.createElement("button"); no.textContent = "Todavía no"
     si.onclick = () => enviar("Sí, confirmo")
     no.onclick = () => enviar("No, todavía no")
-    if (opciones.historico) { si.disabled = true; no.disabled = true }
-    b.append(si, no)
+    if (op.historico) { si.disabled = true; no.disabled = true }
+    b.lastChild.append(si, no)
     div.appendChild(b)
   }
   $("chat").appendChild(div)
-  window.scrollTo(0, document.body.scrollHeight)
-  return div
+  $("chat").scrollTop = $("chat").scrollHeight
 }
-
 function agregarHerramienta(ev) {
   quitarVacio()
   const d = document.createElement("details")
   d.className = "tool " + (ev.ok ? "ok" : "fallo")
-  d.innerHTML = '<summary><span class="nombre">' + escapar(ev.nombre) + '</span><span class="estado">' + (ev.ok ? "✓" : "✗") +
-    '</span> <span class="resumen">' + escapar(ev.resumen || "") + "</span></summary><pre>argumentos: " + escapar(JSON.stringify(ev.args, null, 2)) + "</pre>"
+  d.innerHTML = `<summary><span class="nombre">${esc(ev.nombre)}</span><span class="estado">${ev.ok ? "✓" : "✗"}</span><span class="resumen">${esc(ev.resumen)}</span></summary><pre>argumentos: ${esc(JSON.stringify(ev.args, null, 2))}</pre>`
   $("chat").appendChild(d)
 }
-
-async function mostrarArchivos(caso, contenedor) {
-  try {
-    const r = await fetch("/api/archivos/" + encodeURIComponent(caso), { headers: headers() })
-    const { archivos } = await r.json()
-    const utiles = (archivos || []).filter((a) => !a.endsWith("log.jsonl") && !a.endsWith(".json"))
-    if (!utiles.length) return
-    const div = document.createElement("div")
-    div.className = "archivos"
-    div.innerHTML = "<strong>Archivos generados:</strong><br>" + utiles.map((a) =>
-      '<a target="_blank" href="/api/archivo?ruta=' + encodeURIComponent(a) + (claveAcceso ? "&key=" + encodeURIComponent(claveAcceso) : "") + '">' + escapar(a.replace(/^out\//, "")) + "</a>").join("")
-    contenedor.appendChild(div)
-  } catch {}
-}
-
 function casoDe(toolCalls) {
   for (const t of toolCalls || []) if (t.args && typeof t.args.caso === "string") return t.args.caso
   return null
 }
-
 async function enviar(texto) {
   texto = texto.trim()
   if (!texto || ocupado) return
   ocupado = true; $("enviar").disabled = true
+  const proc = $("procesar"); if (proc) proc.disabled = true
   document.querySelectorAll(".banner button").forEach((b) => (b.disabled = true))
   agregarMensaje("usuario", texto)
   const pensando = document.createElement("div")
   pensando.className = "pensando"; pensando.textContent = "Pensando y usando herramientas"
   $("chat").appendChild(pensando)
-  window.scrollTo(0, document.body.scrollHeight)
+  $("chat").scrollTop = $("chat").scrollHeight
   try {
     const r = await fetch("/api/chat", { method: "POST", headers: headers(), body: JSON.stringify({ sessionId, message: texto }) })
     const data = await r.json()
     pensando.remove()
     if (!r.ok) { agregarMensaje("error", data.error || "Error del servidor."); return }
     for (const t of data.toolCalls || []) agregarHerramienta(t)
-    const div = agregarMensaje("asistente", data.reply || "(sin respuesta)", { confirmar: data.needsConfirmation })
+    agregarMensaje("asistente", data.reply || "(sin respuesta)", { confirmar: data.needsConfirmation })
+    await cargarSolicitudes()
     const caso = casoDe(data.toolCalls)
-    if (caso) mostrarArchivos(caso, div)
+    if (caso) await seleccionar(caso, caso === casoActual)
+    else if (casoActual) await seleccionar(casoActual, true)
   } catch {
     pensando.remove()
     agregarMensaje("error", "No se pudo contactar al servidor. Revisa tu conexión e intenta de nuevo.")
   } finally {
-    ocupado = false; $("enviar").disabled = false; $("entrada").focus()
+    ocupado = false; $("enviar").disabled = false
+    const p = $("procesar"); if (p) p.disabled = false
   }
 }
-
 async function cargarHistorial() {
   try {
-    const r = await fetch("/api/sessions/" + sessionId, { headers: headers() })
-    if (!r.ok) return
-    const { eventos } = await r.json()
+    const { eventos } = await api("/api/sessions/" + sessionId)
     for (const ev of eventos || []) {
       if (ev.tipo === "herramienta") agregarHerramienta(ev)
       else agregarMensaje(ev.tipo, ev.texto || "", { confirmar: ev.needsConfirmation, historico: true })
@@ -210,22 +363,15 @@ async function iniciar() {
       almacen.set("accessKey", claveAcceso)
     }
   } catch { $("meta").textContent = "servidor no disponible" }
-  try {
-    const r = await fetch("/api/casos", { headers: headers() })
-    if (r.status === 401) { almacen.set("accessKey", ""); $("meta").textContent += " · clave de acceso inválida (recarga la página)"; return }
-    const { casos } = await r.json()
-    for (const c of casos) {
-      const b = document.createElement("button"); b.type = "button"; b.textContent = c
-      b.onclick = () => enviar('Procesa el caso "' + c + '". Dime qué campos quedaron llenos, cuáles faltan, si el paquete está listo para firma y qué soportes debo actualizar. No envíes nada todavía.')
-      $("casos").appendChild(b)
-    }
-  } catch {}
+  await cargarSolicitudes()
+  const primera = document.querySelector(".sol")
+  if (primera) await seleccionar(primera.dataset.caso)
   await cargarHistorial()
 }
 
 $("form").onsubmit = (e) => { e.preventDefault(); const t = $("entrada").value; $("entrada").value = ""; enviar(t) }
 $("entrada").onkeydown = (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("form").requestSubmit() } }
-$("nueva").onclick = () => { sessionId = nuevoId(); $("chat").innerHTML = '<p class="vacio">Sesión nueva. Elige un caso o escribe un mensaje.</p>' }
+$("nueva").onclick = () => { sessionId = nuevoId(); $("chat").innerHTML = '<p class="meta" id="chatvacio">Sesión nueva.</p>' }
 iniciar()
 </script>
 </body>

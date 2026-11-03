@@ -54,6 +54,9 @@ Para resultados idénticos en cualquier fecha: `FECHA_REFERENCIA=2026-11-03 bun 
 | `GET` | `/api/sessions/:id` | Historial visible de la sesión (mensajes y llamadas a herramientas) |
 | `GET` | `/api/health` | `{ ok, provider, model }` — nunca expone la clave |
 | `GET` | `/api/casos` | Casos disponibles |
+| `GET` | `/api/solicitudes` | Lista de solicitudes (correos) con estado |
+| `GET` | `/api/casos/:caso` | Detalle: correo, información extraída, campos, soportes, borradores (solo lectura de lo que generaron las herramientas) |
+| `GET` | `/api/paquete/:caso.zip` | Descarga del paquete para firma en .zip |
 | `GET` | `/api/archivos/:caso` | Archivos generados en `out/<caso>/` |
 | `GET` | `/api/archivo?ruta=out/...` | Descarga de un archivo generado (solo dentro de `out/`) |
 
@@ -71,7 +74,8 @@ src/llm/anthropic.ts            implementación Anthropic (fetch, timeout)
 src/llm/simulado.ts             implementación sin modelo (guion fijo) para pruebas
 src/agent.ts                    ciclo del agente, confirmación humana, sesiones, log
 src/server.ts                   API HTTP + front estático
-web/index.html                  chat
+web/index.html                  pantalla: formulario de solicitudes, detalle del caso y chat
+src/solicitudes.ts              datos de solo lectura para la pantalla y zip del paquete
 modulo/                         bonus: agente empaquetado (generado desde las mismas fuentes)
 demo.ts                         herramientas sin modelo
 ```

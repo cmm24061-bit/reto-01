@@ -6,6 +6,7 @@ import type { ProveedorLLM } from "./llm/adapter.ts"
 import { ProveedorAnthropic } from "./llm/anthropic.ts"
 import { ProveedorSimulado } from "./llm/simulado.ts"
 import { dentroDe, listarCasos } from "./tools/_lib.ts"
+import { detalle, solicitudes, zipPaquete } from "./solicitudes.ts"
 
 const directory = resolve(import.meta.dir, "..")
 const entero = (v: string | undefined, def: number) => (v && /^\d+$/.test(v) ? Number(v) : def)
@@ -106,6 +107,23 @@ Bun.serve({
     }
 
     if (p === "/api/casos") return json({ casos: listarCasos(directory) })
+    if (p === "/api/solicitudes") return json({ solicitudes: solicitudes(directory) })
+
+    const mDetalle = p.match(/^\/api\/casos\/([a-z0-9-]+)$/i)
+    if (mDetalle) {
+      const d = detalle(directory, mDetalle[1] ?? "")
+      return d ? json(d) : json({ ok: false, error: "El caso no existe." }, 404)
+    }
+
+    const mZip = p.match(/^\/api\/paquete\/([a-z0-9-]+)\.zip$/i)
+    if (mZip) {
+      const caso = mZip[1] ?? ""
+      const zip = zipPaquete(directory, caso)
+      if (!zip) return json({ ok: false, error: "El paquete aún no existe. Procesa el caso primero." }, 404)
+      return new Response(new Blob([zip as Uint8Array<ArrayBuffer>]), {
+        headers: { "content-type": "application/zip", "content-disposition": `attachment; filename="paquete-${caso}.zip"` },
+      })
+    }
 
     const mArchivos = p.match(/^\/api\/archivos\/([a-z0-9-]+)$/i)
     if (mArchivos) return json({ archivos: listarArchivos(join(directory, "out", mArchivos[1] ?? "")) })
