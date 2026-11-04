@@ -12,7 +12,7 @@ Este archivo describe **el proceso**. El agente lo recibe como contexto. Las reg
    - `requiere_confirmacion`: el mapeo es dudoso (confianza < 0.8) o aplica una regla de país.
 4. **Generar el formulario** en el mismo formato del cliente en `out/<caso>/`.
 5. **Armar el paquete para firma** en `out/<caso>/paquete/`: formulario, copias de soportes, `checklist.md` y `borrador-correo.md`.
-6. **Pedir confirmación** a la analista. Solo con confirmación explícita se simula el envío (`ENVIO-SIMULADO.md`).
+6. **Pedir confirmación** al analista. Solo con confirmación explícita se simula el envío (`ENVIO-SIMULADO.md`).
 
 El agente **nunca firma ni envía**. La firma es del representante legal y el envío es decisión humana.
 
@@ -26,7 +26,7 @@ El agente **nunca firma ni envía**. La firma es del representante legal y el en
 | Panamá (PA) | RUC |
 | Honduras (HN) | RTN |
 
-Periferia solo tiene NIT colombiano. Si el cliente es de otro país, el campo se llena con el NIT y se marca `requiere_confirmacion` con la nota "identificador extranjero". La analista decide si el cliente lo acepta.
+Periferia solo tiene NIT colombiano. Si el cliente es de otro país, el campo se llena con el NIT y se marca `requiere_confirmacion` con la nota "identificador extranjero". El analista decide si el cliente lo acepta.
 
 Si la plantilla usa una etiqueta ambigua ("Identificación tributaria"), se propone el equivalente del país del cliente y se marca `requiere_confirmacion`.
 

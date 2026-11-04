@@ -56,6 +56,8 @@
   .fila.ancha { grid-template-columns: minmax(150px, 1fr) minmax(90px, .7fr) minmax(0, 2.6fr); }
   .fila > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .fila .et { color: var(--muted); }
+  .fila.resumen { background: var(--soft); align-items: center; }
+  .fila.resumen .chip { margin: 0 0 0 6px; }
   .fila .obs { color: var(--muted); font-size: 12px; }
   .estado-paquete { margin-top: 14px; padding: 10px 14px; border-radius: 10px; font-size: 13px; }
   .estado-paquete.no { background: var(--warn-soft); border: 1px solid var(--warn-line); color: var(--warn); }
@@ -228,6 +230,21 @@ function chipSoporte(s) {
   const extra = s.estado === "vencido" ? ` (venció ${esc(s.vigencia_hasta)})` : s.estado === "ausente" ? " (ausente)" : ""
   return `<span class="chip ${clase}">${esc(s.nombre)}${extra}</span>`
 }
+function plural(n, uno, varios) { return n + " " + (n === 1 ? uno : varios) }
+function resumenCampos(campos) {
+  if (!campos) return '<span class="meta">· pendiente de procesar</span>'
+  const n = (e) => campos.filter((c) => c.estado === e).length
+  return `<span class="chip ok">${plural(n("lleno"), "lleno", "llenos")}</span>` +
+    `<span class="chip warn">${n("requiere_confirmacion")} por confirmar</span>` +
+    `<span class="chip err">${plural(n("faltante"), "faltante", "faltantes")}</span>`
+}
+function resumenSoportes(paquete) {
+  if (!paquete) return '<span class="meta">· pendiente de procesar</span>'
+  const n = (e) => paquete.soportes.filter((s) => s.estado === e).length
+  return `<span class="chip ok">${plural(n("presente"), "presente", "presentes")}</span>` +
+    `<span class="chip warn">${plural(n("vencido"), "vencido", "vencidos")}</span>` +
+    `<span class="chip err">${plural(n("ausente"), "ausente", "ausentes")}</span>`
+}
 function renderDetalle(d) {
   const c = d.correo, x = d.extraido
   let html = `
@@ -240,17 +257,18 @@ function renderDetalle(d) {
       <div class="fila"><span class="et">Cliente</span><span style="grid-column: span 2">${esc(c.cliente)}</span></div>
       <div class="fila"><span class="et">País · identificador</span><span style="grid-column: span 2">${esc(x.pais_nombre)} · ${esc(x.identificador)}</span></div>
       <div class="fila"><span class="et">Formato de salida</span><span style="grid-column: span 2">${esc(FORMATO[c.formato] || c.formato)}</span></div>
-      <div class="fila"><span class="et">Campos solicitados</span><span style="grid-column: span 2">${x.campos_solicitados}</span></div>
-      <div class="fila"><span class="et">Soportes exigidos</span><span style="grid-column: span 2" title="${esc(x.soportes_exigidos.join(", "))}">${x.soportes_exigidos.length}</span></div>
+      <div class="fila resumen"><span class="et">Campos solicitados</span><span style="grid-column: span 2"><strong>${x.campos_solicitados}</strong> ${resumenCampos(d.campos)}</span></div>
+      <div class="fila resumen"><span class="et">Soportes exigidos</span><span style="grid-column: span 2"><strong>${x.soportes_exigidos.length}</strong> ${resumenSoportes(d.paquete)}</span></div>
+      ${d.paquete ? `<div class="fila"><span class="et">Estado</span><span style="grid-column: span 2; color: ${d.paquete.listo_para_firma ? "var(--ok)" : "var(--warn)"}">${d.paquete.listo_para_firma ? "Listo para firma" : "No listo para firma · " + plural(d.paquete.motivos_bloqueo.length, "soporte por resolver", "soportes por resolver")}</span></div>` : ""}
     </div>`
   if (x.error_plantilla) html += `<p class="msg error">${esc(x.error_plantilla)}</p>`
 
   if (!d.campos) {
     html += '<p class="meta" style="margin-top:18px">Esta solicitud aún no se ha procesado. Pulsa «Procesar con el agente» para llenar los campos y armar el paquete.</p>'
   } else {
-    html += seccionCampos(d.campos, "lleno", "Llenos", "ok")
-    html += seccionCampos(d.campos, "requiere_confirmacion", "Por confirmar", "warn")
     html += seccionCampos(d.campos, "faltante", "Faltantes", "err")
+    html += seccionCampos(d.campos, "requiere_confirmacion", "Por confirmar", "warn")
+    html += seccionCampos(d.campos, "lleno", "Llenos", "ok")
   }
   if (d.paquete) {
     html += `<h3>Soportes</h3><div>${d.paquete.soportes.map(chipSoporte).join("")}</div>`

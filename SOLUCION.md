@@ -2,27 +2,32 @@
 
 ## 1. Problema en una frase
 
-El área administrativa transcribe a mano, entre 8 y 12 veces al mes, los mismos datos de Periferia en formularios de clientes con formatos distintos (Excel, PDF o portal). Eso genera errores en datos sensibles, depende de una sola persona y retrasa la facturación. **Le duele a la analista administrativa** (retrabajo) y **a la empresa** (facturación tardía y riesgo de error en NIT o cuenta bancaria).
+El área administrativa transcribe manualmente los mismos datos de Periferia para registrarla como proveedor, entre 8 y 12 veces al mes, en formularios de clientes con formatos distintos (Excel, PDF o portal). Este proceso genera errores en datos sensibles, depende de una sola persona y retrasa la facturación. Es un proceso que requiere retrabajo del analista administrativo, reduce el nivel de productividad de la empresa (facturación tardía) y aumenta el riesgo de cometer errores con información sensible, como errores en el NIT o en la cuenta bancaria.
 
 ## 2. Arquitectura
 
 ```
-┌──────────────────┐  POST /api/chat   ┌───────────────────────────────────────────────┐
-│ web/index.html   │ ────────────────▶ │ src/server.ts  (API HTTP + sirve el front)    │
-│ - historial      │ ◀──────────────── │        │                                      │
-│ - tool calls     │  reply, toolCalls,│        ▼                                      │
-│ - confirmación   │  needsConfirmation│ src/agent.ts   (ciclo, confirmación, sesiones)│
-└──────────────────┘                   │   │                    │                      │
-                                       │   ▼                    ▼                      │
-                                       │ src/llm/adapter.ts   src/tools/registry.ts    │
-                                       │   ├ anthropic.ts       (validación zod)       │
-                                       │   └ simulado.ts          │                    │
-                                       │                          ▼                    │
-                                       │                  src/tools/proveedor.ts       │
-                                       └──────────────────────────┬────────────────────┘
-                                                 lee              │            escribe
-                                  fixtures/ + src/knowledge/ ◀────┴────▶ out/
+┌───────────────────────────┐ POST /api/chat    ┌───────────────────────────────────────────────┐
+│ web/index.html            │ ────────────────▶ │ src/server.ts  (API HTTP + sirve el front)    │
+│ ┌ Formulario de           │ ◀──────────────── │   │                        │                  │
+│ │ solicitudes (correos)   │ reply, toolCalls, │   ▼                        ▼                  │
+│ ├ Detalle del caso        │ needsConfirmation │ src/agent.ts          src/solicitudes.ts      │
+│ │ (solo lectura)          │                   │ (ciclo, confirmación, (solo lectura de out/,  │
+│ └ Chat: historial,        │ GET /api/casos/.. │  sesiones)             zip del paquete)       │
+│   herramientas,           │ ◀──────────────── │   │            │                              │
+│   confirmación            │                   │   ▼            ▼                              │
+└───────────────────────────┘                   │ src/llm/     src/tools/registry.ts (zod)      │
+                                                │ adapter.ts     │                              │
+                                                │ ├ anthropic.ts ▼                              │
+                                                │ └ simulado.ts  src/tools/proveedor.ts         │
+                                                └────────────────┬──────────────────────────────┘
+                                                      lee        │           escribe
+                                       fixtures/ + src/knowledge/ ◀┴▶ out/
 ```
+
+**Pantalla.** En el panel de la izquierda, una lista de los correos recibidos que contienen formularios o solicitudes de registro de proveedores, con su estado. En el panel del centro, el detalle del caso: el correo, la información extraída, los campos (clasificados según si están llenos, por confirmar o faltantes, con su observación), los soportes, la vista previa del formulario, el botón de descarga del paquete de documentos y el borrador del correo. A la derecha, el chat con el agente, que conduce al analista por el proceso de revisión.
+
+El panel central **solo muestra** lo que las herramientas ya escribieron en `out/` (`src/solicitudes.ts` no calcula ni mapea nada). El botón "Procesar con el agente" no llama a las herramientas directamente: envía el mensaje por el chat, así todo el trabajo lo hace el agente, queda visible en el historial y registrado en el log.
 
 Dónde vive cada cosa:
 
@@ -38,7 +43,7 @@ Un cambio de reglas de negocio (por ejemplo, agregar Guatemala → NIT, o subir 
 
 `src/agent.ts → procesarTurno()`:
 
-1. Se agrega el mensaje de la usuaria al historial.
+1. Se agrega el mensaje del usuario al historial.
 2. **Bucle** de hasta `MAX_ITERACIONES` (25 por defecto):
    - Se envía al modelo el system prompt (`prompt.md` + conocimiento), el historial y las herramientas (JSON Schema generado desde zod).
    - Si el modelo pide herramientas, el backend **valida los argumentos con zod** (si fallan, devuelve el error al modelo), ejecuta, registra en `out/log.jsonl` y en el historial visible, y vuelve a llamar al modelo.
@@ -73,7 +78,7 @@ Un cambio de reglas de negocio (por ejemplo, agregar Guatemala → NIT, o subir 
 - **Estrategia:** navegador controlado por el agente (Playwright) en modo **asistido**, no RPA desatendido.
   - Se usa una "receta" por portal (selectores de cada campo), guardada como conocimiento y no como código.
   - Si la receta falla, porque el layout cambió, el agente vuelve a `valores-portal.md`. No improvisa.
-  - Alternativa evaluada: una extensión de navegador que rellena campos en la sesión de la analista. Es más robusta frente a MFA, pero exige instalar y mantener la extensión.
+  - Alternativa evaluada: una extensión de navegador que rellena campos en la sesión del analista. Es más robusta frente a MFA, pero exige instalar y mantener la extensión.
 - **Límites:**
   - CAPTCHA y MFA: siempre los resuelve el humano. El agente se detiene y espera.
   - Cambios de layout: recetas versionadas, con detección de campos no encontrados.
@@ -81,7 +86,7 @@ Un cambio de reglas de negocio (por ejemplo, agregar Guatemala → NIT, o subir 
 - **Credenciales:**
   - Nunca en el repositorio, en el prompt ni en los logs.
   - Viven en un gestor de secretos corporativo (Bitwarden o Azure Key Vault).
-  - La analista las ingresa directamente en la ventana del navegador; el agente nunca las lee.
+  - El analista las ingresa directamente en la ventana del navegador; el agente nunca las lee.
   - Los logs del navegador y las capturas excluyen los campos de contraseña.
 - **Reparto de tareas:**
 
@@ -95,11 +100,24 @@ Un cambio de reglas de negocio (por ejemplo, agregar Guatemala → NIT, o subir 
 |---|---|---|---|
 | 1 | **Valores siempre desde el maestro**, incluso si el modelo envía el mapeo | Usar los valores que manda el modelo | CA2: elimina por diseño el riesgo de que el modelo "complete" o altere un dato. Costo: el modelo no puede corregir un valor, pero el maestro es la fuente oficial. |
 | 2 | **Confirmación validada en el servidor** (`ctx.confirmacionHumana`) | Confiar en `confirmado: true` del modelo | Un modelo puede equivocarse o ser manipulado ("ya confirmé antes"). La regla RN4 queda en código. Costo: frases afirmativas poco comunes ("mándalo ya") se deben confirmar con el botón. |
-| 3 | **Front en HTML plano servido por el backend** | React + Vite | Un solo proceso, sin paso de build, menos piezas que puedan fallar en el despliegue. Para un chat de una pantalla, React no aporta. |
+| 3 | **Front en HTML plano servido por el backend** (solicitudes, detalle y chat en una página) | React + Vite | Un solo proceso, sin paso de build, menos piezas que puedan fallar en el despliegue. Son tres paneles que leen la API; React no aporta lo suficiente para justificar el build. |
 | 4 | **PDF generado con `pdf-lib`** | Rellenar un AcroForm | No se recibió el PDF original y el PRD acepta el PDF generado. Las celdas en amarillo y las notas marcan lo que requiere confirmación. |
 | 5 | **Mapeo determinista** (glosario exacto → normalizado → similitud por palabras) | Pedir al modelo que mapee | Es reproducible (`demo.ts` da siempre lo mismo), trazable (ruta y confianza) y gratis. El modelo solo orquesta. |
 | 6 | **`fetch` directo a la API** en lugar del SDK | `@anthropic-ai/sdk` | Una dependencia menos y control explícito del timeout y de los mensajes de error. |
 | 7 | **Render (servidor siempre activo, Docker)** | Vercel (serverless) | El agente mantiene sesión y escribe en `out/`. En serverless, cada request puede caer en otra instancia y perder ambos. |
+| 8 | **Botón "Procesar" que pasa por el chat** | Botón que llama a las herramientas directo | Mantiene al agente como único ejecutor: cada paso queda visible, validado y registrado (CA4), y la confirmación sigue la misma regla (CA3). |
+
+### Dependencias
+
+| Dependencia | Para qué | Por qué esta |
+|---|---|---|
+| `zod` | Validar los argumentos de las herramientas y generar su JSON Schema | Obligatoria en el PRD; la v4 genera el JSON Schema sin otra librería |
+| `exceljs` | Escribir el formulario Excel en la hoja y celda exactas | Permite elegir celda, estilos y notas en las celdas por confirmar |
+| `pdf-lib` | Generar el formulario PDF | Sin dependencias nativas; funciona igual en local y en Docker |
+| `fflate` | Comprimir el paquete para firma en un `.zip` descargable | Muy liviana, sin dependencias, comprime en memoria |
+| `typescript`, `@types/bun` (desarrollo) | Verificación de tipos (`bun run typecheck`) | No se instalan en producción |
+
+No se usa el SDK del proveedor: la llamada a la API se hace con `fetch` (decisión 6).
 
 ## 7. Supuestos
 
@@ -108,7 +126,7 @@ Un cambio de reglas de negocio (por ejemplo, agregar Guatemala → NIT, o subir 
 - "País" se llena con el valor del maestro (`CO`) sin traducirlo a "Colombia", para no transformar datos.
 - "Correo electrónico" corresponde a `contacto_comercial.email`, según el glosario.
 - "Ingresos anuales" se escribe como número (en COP, según el maestro).
-- El **envío simulado se permite aunque el paquete no esté listo para firma**, si la usuaria lo confirma explícitamente. La decisión es humana; el archivo y la pregunta de confirmación llevan una advertencia visible.
+- El **envío simulado se permite aunque el paquete no esté listo para firma**, si el usuario lo confirma explícitamente. La decisión es humana; el archivo y la pregunta de confirmación llevan una advertencia visible.
 - Los datos bancarios se incluyen en el formulario cuando la plantilla los pide, pero **no** en el borrador de correo ni en el chat (enmascarados).
 - Las sesiones se guardan en memoria y en `out/sesiones/`. En el plan gratuito de Render se pierden al reiniciar el servicio, lo cual es aceptable según el PRD (sin persistencia).
 
@@ -144,7 +162,7 @@ Un cambio de reglas de negocio (por ejemplo, agregar Guatemala → NIT, o subir 
   - Verificar el flujo de punta a punta.
 - **Revisión propia:** revisé y ejecuté cada parte (`demo.ts`, el chat, los archivos generados) y validé las reglas de negocio contra el PRD.
 - **Lo que descarté de lo propuesto:**
-  - Desplegar en Vercel o en Google Apps Script. Vercel porque es serverless, y Apps Script porque no cumple TypeScript con Bun/Node, zod ni `bun run demo.ts`.
+  - Desplegar en Vercel, porque es serverless y perdería la sesión y los archivos de `out/` entre mensajes.
   - React para el front, por el tiempo disponible.
   - Que el modelo hiciera el mapeo de campos, porque no sería determinista ni trazable.
 

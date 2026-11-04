@@ -433,10 +433,10 @@ export const armar_paquete = {
 }
 
 export const simular_envio = {
-  description: "Simula el envío del paquete al cliente escribiendo out/<caso>/ENVIO-SIMULADO.md; solo funciona con confirmación explícita de la usuaria.",
+  description: "Simula el envío del paquete al cliente escribiendo out/<caso>/ENVIO-SIMULADO.md; solo funciona con confirmación explícita del usuario.",
   args: {
     caso: z.string().describe("Nombre de la carpeta del caso"),
-    confirmado: z.boolean().describe("true solo si la usuaria confirmó explícitamente el envío en su último mensaje"),
+    confirmado: z.boolean().describe("true solo si el usuario confirmó explícitamente el envío en su último mensaje"),
   },
   async execute(args: { caso: string; confirmado: boolean }, ctx: ToolContext): Promise<string> {
     try {
@@ -465,7 +465,7 @@ export const simular_envio = {
         `- Fecha: ${new Date().toISOString()}`,
         `- Para: ${sol.data.de}`,
         `- Asunto: RE: ${sol.data.asunto}`,
-        `- Confirmado por la usuaria en la sesión: ${ctx.sessionId}`,
+        `- Confirmado por el usuario en la sesión: ${ctx.sessionId}`,
         `- Listo para firma: ${estado.data.listo_para_firma ? "sí" : "no"}`,
         ...(advertencia ? ["", `**Advertencia:** ${advertencia}`, ...estado.data.motivos_bloqueo.map((m) => `- ${m}`)] : []),
         "",

@@ -2,7 +2,7 @@
 
 Agente conversacional que lee la solicitud de un cliente, llena el formulario de registro como proveedor desde el repositorio maestro, arma el paquete para firma y **pide confirmación humana** antes de cualquier envío (simulado).
 
-- **Link de prueba:** `PEGAR_AQUI_EL_LINK_DE_RENDER`
+- **Link de prueba:** https://reto-01-agente-proveedor-scsy.onrender.com
 - **Clave de acceso:** no requerida (si se activa `APP_ACCESS_KEY`, se indicará aquí).
 - Planteamiento de la solución: [`SOLUCION.md`](SOLUCION.md)
 
